@@ -1,2 +1,0 @@
-# zzt-suanfa
-for   suanfaclass
