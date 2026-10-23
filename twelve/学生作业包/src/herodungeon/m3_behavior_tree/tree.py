@@ -96,8 +96,11 @@ def traverse_preorder(
 ) -> list[str]:
     """Root, then each subtree left-to-right."""
     recorder = recorder or EventRecorder()
-    # TODO: emit visit，然后先根、再从左到右递归子树（depth + 1）
-    raise NotImplementedError("implement traverse_preorder")
+    _emit_visit(recorder, "preorder", root, depth)
+    result: list[str] = [root.name]
+    for child in root.children:
+        result.extend(traverse_preorder(child, recorder, depth + 1))
+    return result
 
 
 def traverse_inorder(
@@ -109,8 +112,16 @@ def traverse_inorder(
     BST). Inorder has no standard meaning for 3+ children; this is our convention.
     """
     recorder = recorder or EventRecorder()
-    # TODO: 先递归第一个孩子，再 visit 自己，再递归其余孩子
-    raise NotImplementedError("implement traverse_inorder")
+    if not root.children:
+        _emit_visit(recorder, "inorder", root, depth)
+        return [root.name]
+    result: list[str] = []
+    result.extend(traverse_inorder(root.children[0], recorder, depth + 1))
+    _emit_visit(recorder, "inorder", root, depth)
+    result.append(root.name)
+    for child in root.children[1:]:
+        result.extend(traverse_inorder(child, recorder, depth + 1))
+    return result
 
 
 def traverse_postorder(
@@ -118,8 +129,12 @@ def traverse_postorder(
 ) -> list[str]:
     """Children first, then the parent -- useful for "clear the dungeon from the leaves"."""
     recorder = recorder or EventRecorder()
-    # TODO: 先递归全部孩子，最后 visit 自己
-    raise NotImplementedError("implement traverse_postorder")
+    result: list[str] = []
+    for child in root.children:
+        result.extend(traverse_postorder(child, recorder, depth + 1))
+    _emit_visit(recorder, "postorder", root, depth)
+    result.append(root.name)
+    return result
 
 
 def traverse_bfs(root: TreeNode, recorder: EventRecorder | None = None) -> list[str]:
@@ -129,7 +144,21 @@ def traverse_bfs(root: TreeNode, recorder: EventRecorder | None = None) -> list[
     right after the pop, before its children are queued), then ``visit``.
     """
     recorder = recorder or EventRecorder()
-    # TODO: 用队列做层序遍历，队列里放 (节点, 深度)
-    # TODO: 出队后先 emit enqueue_level(node, depth, frontier)，再 emit visit
-    raise NotImplementedError("implement traverse_bfs")
+    queue: deque[tuple[TreeNode, int]] = deque([(root, 0)])
+    result: list[str] = []
+    while queue:
+        node, depth = queue.popleft()
+        frontier = len(queue)
+        recorder.emit(
+            "enqueue_level",
+            SOURCE,
+            node=node.name,
+            depth=depth,
+            frontier=frontier,
+        )
+        _emit_visit(recorder, "bfs", node, depth)
+        result.append(node.name)
+        for child in node.children:
+            queue.append((child, depth + 1))
+    return result
 
